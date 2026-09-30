@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
+         bootstrap="tests/bootstrap.php" colors="true" cacheDirectory=".phpunit.cache">
+    <testsuites>
+        <testsuite name="api">
+            <directory>tests</directory>
+        </testsuite>
+    </testsuites>
+    <php>
+        <env name="SF_TEST_DSN" value="mysql:host=127.0.0.1;dbname=sf_test;charset=utf8mb4"/>
+        <env name="SF_TEST_USER" value="sf"/>
+        <env name="SF_TEST_PASSWORD" value="sf"/>
+    </php>
+</phpunit>

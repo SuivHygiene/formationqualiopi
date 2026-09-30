@@ -1,0 +1,9 @@
+/vendor/
+/node_modules/
+/frontend/node_modules/
+/config.php
+/.phpunit.cache/
+/public/assets/
+/public/*.html
+/dist/
+.DS_Store
