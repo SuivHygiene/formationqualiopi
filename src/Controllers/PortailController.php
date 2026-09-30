@@ -16,8 +16,12 @@ use App\Core\Validator;
  */
 final class PortailController
 {
-    /** Ouverture de la signature : 30 min avant le début du créneau, jusqu'à la fin de la journée. */
+    /**
+     * Fenêtre de signature par le stagiaire : de 30 min avant le début à 1 h après la fin du créneau.
+     * En dehors, seul l'organisme peut saisir la présence (tablette ou feuille papier), ce qui est tracé.
+     */
     private const OUVERTURE_AVANCE_MIN = 30;
+    private const FERMETURE_APRES_MIN = 60;
 
     public function __construct(private readonly Context $ctx)
     {
@@ -72,14 +76,27 @@ final class PortailController
         return new \DateTimeImmutable(is_string($fixed) ? $fixed : 'now', $this->ctx->timezone());
     }
 
-    /** @param array<string,mixed> $c */
-    private function signable(array $c): bool
+    /**
+     * Position de l'instant présent par rapport à la fenêtre de signature.
+     * @param array<string,mixed> $c
+     * @return 'avant'|'ouverte'|'passee'
+     */
+    private function fenetre(array $c): string
     {
         $now = $this->now();
         $tz = $this->ctx->timezone();
         $start = new \DateTimeImmutable($c['date'] . ' ' . $c['heure_debut'], $tz);
-        $endOfDay = new \DateTimeImmutable($c['date'] . ' 23:59:59', $tz);
-        return $now >= $start->modify('-' . self::OUVERTURE_AVANCE_MIN . ' minutes') && $now <= $endOfDay;
+        $end = new \DateTimeImmutable($c['date'] . ' ' . $c['heure_fin'], $tz);
+        if ($now < $start->modify('-' . self::OUVERTURE_AVANCE_MIN . ' minutes')) {
+            return 'avant';
+        }
+        return $now <= $end->modify('+' . self::FERMETURE_APRES_MIN . ' minutes') ? 'ouverte' : 'passee';
+    }
+
+    /** @param array<string,mixed> $c */
+    private function signable(array $c): bool
+    {
+        return $this->fenetre($c) === 'ouverte';
     }
 
     private function moi(Request $req): array
@@ -100,7 +117,8 @@ final class PortailController
             [$i['id'], $i['session_id']],
         );
         foreach ($creneaux as &$c) {
-            $c['signable'] = $c['emargement'] === null && $this->signable($c);
+            $c['fenetre'] = $this->fenetre($c);
+            $c['signable'] = $c['emargement'] === null && $c['fenetre'] === 'ouverte';
         }
         unset($c);
         $questionnaires = $db->all(
@@ -135,7 +153,7 @@ final class PortailController
             throw HttpError::notFound('Créneau');
         }
         if (!$this->signable($c)) {
-            throw HttpError::bad('La signature de ce créneau n\'est pas ouverte (uniquement le jour même).');
+            throw HttpError::bad('La signature de ce créneau n\'est pas ouverte (de 30 min avant le début à 1 h après la fin). Adressez-vous au formateur.');
         }
         if ($this->ctx->db->value('SELECT id FROM emargements WHERE creneau_id = ? AND inscription_id = ?', [$c['id'], $i['id']]) !== null) {
             throw new HttpError(409, 'Vous avez déjà émargé pour ce créneau');

@@ -7,6 +7,8 @@ namespace App\Core;
  * Nettoyage/validation des entrées selon un mini-DSL :
  *   'str:190|req'  'text'  'int'  'dec'  'date'  'time'  'bool'  'email'
  *   'enum:a,b,c'   'dataurl:500000'  'fk:clients'  'json'
+ * Drapeaux : 'req' obligatoire ; 'notnull' vide → '' ; 'def' vide → champ ignoré
+ * (la base applique sa valeur par défaut). Un enum vide est ignoré sauf si '' est autorisé.
  * Seuls les champs déclarés sont conservés (liste blanche).
  */
 final class Validator
@@ -37,7 +39,16 @@ final class Validator
                     $errors[$field] = 'Champ obligatoire';
                     continue;
                 }
-                $out[$field] = $type === 'bool' ? 0 : ($type === 'str' && in_array('notnull', $parts, true) ? '' : null);
+                if ($type === 'enum') {
+                    if (in_array('', explode(',', (string) $arg), true)) {
+                        $out[$field] = '';
+                    }
+                    continue;
+                }
+                if (in_array('def', $parts, true)) {
+                    continue;
+                }
+                $out[$field] = $type === 'bool' ? 0 : (in_array('notnull', $parts, true) ? '' : null);
                 continue;
             }
             try {

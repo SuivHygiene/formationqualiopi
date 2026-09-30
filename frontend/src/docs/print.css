@@ -1,0 +1,502 @@
+/* Documents officiels imprimables (A4). */
+
+@page {
+  size: A4 portrait;
+  margin: 14mm;
+}
+
+/* Page nommée pour la feuille d'émargement en paysage (> 2 créneaux / jour). */
+@page paysage {
+  size: A4 landscape;
+  margin: 12mm;
+}
+
+:root {
+  --accent: #1f3a68;
+  --texte: #1a1a1a;
+  --gris: #5b6270;
+  --trait: #b9bec7;
+  --fond-leger: #f3f5f8;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+body {
+  margin: 0;
+  background: #e9ebef;
+  color: var(--texte);
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-size: 10.5pt;
+  line-height: 1.45;
+}
+
+/* ---------- Barre d'outils (écran uniquement) ---------- */
+.toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: #fff;
+  border-bottom: 1px solid #d6d9df;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+}
+.toolbar-in {
+  max-width: 210mm;
+  margin: 0 auto;
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+.btn-print {
+  font: inherit;
+  font-weight: 600;
+  padding: 8px 16px;
+  border-radius: 6px;
+  border: 0;
+  background: #1f3a68;
+  color: #fff;
+  cursor: pointer;
+}
+.btn-print:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.aide {
+  color: var(--gris);
+  font-size: 10pt;
+}
+.chargement,
+.erreur {
+  max-width: 210mm;
+  margin: 24px auto;
+  padding: 16px;
+  background: #fff;
+  border-radius: 6px;
+}
+.erreur {
+  border-left: 4px solid #b3261e;
+  color: #b3261e;
+  font-weight: 600;
+}
+
+/* ---------- Feuille A4 à l'écran ---------- */
+.doc {
+  width: 210mm;
+  min-height: 297mm;
+  margin: 16px auto;
+  padding: 14mm;
+  background: #fff;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.12);
+}
+body.paysage .doc-feuille {
+  width: 297mm;
+  min-height: 210mm;
+}
+
+@media screen and (max-width: 820px) {
+  .doc,
+  body.paysage .doc-feuille {
+    width: auto;
+    min-height: 0;
+    margin: 8px;
+    padding: 16px;
+  }
+}
+
+/* ---------- Typographie ---------- */
+h1,
+h2,
+h3 {
+  color: var(--accent);
+  line-height: 1.25;
+  break-after: avoid;
+}
+.doc-titre {
+  font-size: 16pt;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin: 8mm 0 2mm;
+}
+.doc-sous-titre {
+  text-align: center;
+  color: var(--gris);
+  margin: 0 0 6mm;
+}
+h2 {
+  font-size: 11.5pt;
+  margin: 5mm 0 2mm;
+  padding-bottom: 1mm;
+  border-bottom: 1px solid var(--accent);
+}
+h3 {
+  font-size: 10.5pt;
+  margin: 3mm 0 1mm;
+}
+p {
+  margin: 0 0 2.5mm;
+}
+.pre {
+  white-space: pre-wrap;
+  margin: 0 0 2.5mm;
+}
+.muted {
+  color: var(--gris);
+  font-style: italic;
+}
+.small {
+  font-size: 8.5pt;
+  color: var(--gris);
+}
+.mono {
+  font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, 'Liberation Mono', monospace;
+}
+
+/* ---------- En-tête organisme ---------- */
+.doc-head {
+  border-bottom: 2px solid var(--accent);
+  padding-bottom: 4mm;
+}
+.org {
+  display: flex;
+  align-items: center;
+  gap: 6mm;
+}
+.logo {
+  max-height: 22mm;
+  max-width: 50mm;
+  object-fit: contain;
+}
+.org-id {
+  font-size: 8.5pt;
+  color: var(--gris);
+  line-height: 1.35;
+}
+.org-nom {
+  font-size: 13pt;
+  font-weight: 700;
+  color: var(--accent);
+  margin-bottom: 1mm;
+}
+
+/* ---------- Tableaux ---------- */
+table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 2mm 0 4mm;
+}
+.kv th,
+.kv td {
+  text-align: left;
+  vertical-align: top;
+  padding: 1.2mm 2mm;
+  border-bottom: 0.5pt solid var(--trait);
+}
+.kv th {
+  width: 38mm;
+  font-weight: 600;
+  color: var(--gris);
+}
+.grille th,
+.grille td {
+  border: 0.5pt solid var(--trait);
+  padding: 1.5mm 2mm;
+  text-align: left;
+  vertical-align: top;
+}
+.grille thead th {
+  background: var(--fond-leger);
+  font-weight: 600;
+}
+.grille tr {
+  break-inside: avoid;
+}
+.num {
+  text-align: right !important;
+  white-space: nowrap;
+}
+
+.creneaux {
+  margin: 1mm 0 3mm;
+  padding-left: 5mm;
+}
+
+/* ---------- Signatures ---------- */
+.fait {
+  margin-top: 6mm;
+}
+.signatures {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10mm;
+  margin-top: 4mm;
+  break-inside: avoid;
+}
+.signatures.single {
+  justify-content: flex-end;
+}
+.sig-bloc {
+  flex: 0 1 80mm;
+  break-inside: avoid;
+}
+.sig-titre {
+  font-weight: 700;
+  margin-bottom: 1mm;
+}
+.sig-zone {
+  min-height: 28mm;
+  margin-top: 2mm;
+  border: 0.5pt dashed var(--trait);
+  border-radius: 2mm;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2mm;
+}
+.sig-zone img {
+  max-height: 32mm;
+  max-width: 100%;
+  object-fit: contain;
+}
+
+/* ---------- QR vérification ---------- */
+.qr-verif {
+  display: flex;
+  align-items: center;
+  gap: 3mm;
+  flex: 0 1 80mm;
+  font-size: 9pt;
+  break-inside: avoid;
+}
+.qr-verif img {
+  width: 26mm;
+  height: 26mm;
+}
+.qr-verif .mono {
+  word-break: break-all;
+}
+
+/* ---------- Convocation ---------- */
+.destinataire {
+  margin: 6mm 0 0 auto;
+  width: 80mm;
+}
+.encadre {
+  border: 1pt solid var(--accent);
+  border-radius: 3mm;
+  padding: 4mm;
+  margin: 4mm 0;
+  display: flex;
+  gap: 5mm;
+  align-items: center;
+  break-inside: avoid;
+}
+.encadre img {
+  width: 34mm;
+  height: 34mm;
+  flex: none;
+}
+.encadre-titre {
+  font-weight: 700;
+  color: var(--accent);
+  font-size: 11.5pt;
+  margin-bottom: 1mm;
+}
+.encadre .mono {
+  word-break: break-all;
+}
+.codes {
+  margin-top: 2mm;
+  font-size: 11pt;
+}
+
+/* Convocation : tenir sur une page. */
+.doc-convocation .destinataire {
+  margin-top: 2mm;
+}
+.doc-convocation .doc-titre {
+  margin: 3mm 0 2mm;
+}
+.doc-convocation .signatures {
+  margin-top: 2mm;
+}
+.doc-convocation .fait {
+  margin-top: 5mm;
+}
+.doc-convocation .sig-zone {
+  min-height: 18mm;
+}
+.doc-convocation .doc-foot {
+  margin-top: 4mm;
+}
+.doc-convocation .encadre img {
+  width: 28mm;
+  height: 28mm;
+}
+.doc-convocation .encadre p {
+  margin-bottom: 1.5mm;
+}
+.infos {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.2mm 8mm;
+  margin: 2mm 0 3mm;
+  padding: 2.5mm 3mm;
+  background: var(--fond-leger);
+  border-radius: 2mm;
+}
+.infos .plein {
+  grid-column: 1 / -1;
+}
+.infos .lbl {
+  display: inline-block;
+  min-width: 24mm;
+  font-weight: 600;
+  color: var(--gris);
+}
+
+/* ---------- Attestation / certificat ---------- */
+.corps-attest {
+  font-size: 11pt;
+  margin-top: 6mm;
+}
+.certificat {
+  font-size: 11pt;
+  margin-top: 6mm;
+}
+.cert-nom {
+  font-size: 12.5pt;
+}
+.cases {
+  list-style: none;
+  padding-left: 4mm;
+  margin: 0 0 3mm;
+}
+.case {
+  font-size: 13pt;
+  margin-right: 1.5mm;
+}
+.engagement {
+  font-size: 9.5pt;
+  margin-top: 5mm;
+}
+
+/* ---------- Convention ---------- */
+.parties p {
+  margin-bottom: 2mm;
+}
+.annexe {
+  break-before: page;
+  page-break-before: always;
+}
+.cg {
+  font-size: 9pt;
+}
+
+/* ---------- Feuille d'émargement ---------- */
+.jour {
+  margin-top: 4mm;
+}
+.jour h2::first-letter {
+  text-transform: uppercase;
+}
+.emargement {
+  table-layout: fixed;
+}
+.emargement .col-stag {
+  width: 55mm;
+}
+.emargement td.sig-cell {
+  height: 16mm;
+  text-align: center;
+  vertical-align: middle;
+}
+.sig-img {
+  max-height: 38px;
+  max-width: 100%;
+  display: block;
+  margin: 0 auto;
+}
+.sig-meta {
+  font-size: 7pt;
+  color: var(--gris);
+}
+.absent {
+  font-weight: 600;
+  color: #8a1c14;
+}
+.emargement tr.formateur td {
+  background: var(--fond-leger);
+}
+.mention-sig {
+  margin-top: 4mm;
+}
+
+/* ---------- Pied ---------- */
+.doc-foot {
+  margin-top: 8mm;
+  padding-top: 2mm;
+  border-top: 0.5pt solid var(--trait);
+  font-size: 8pt;
+  color: var(--gris);
+  break-inside: avoid;
+}
+.foot-ligne {
+  display: flex;
+  justify-content: space-between;
+  gap: 4mm;
+}
+.mentions {
+  margin-top: 1mm;
+  font-size: 7.5pt;
+}
+
+/* ---------- Impression ---------- */
+@media print {
+  body {
+    background: #fff;
+  }
+  .no-print,
+  .toolbar,
+  .chargement {
+    display: none !important;
+  }
+  .doc {
+    width: auto;
+    min-height: 0;
+    margin: 0;
+    padding: 0;
+    box-shadow: none;
+    break-after: page;
+    page-break-after: always;
+  }
+  .doc:last-child {
+    break-after: auto;
+    page-break-after: auto;
+  }
+  body.paysage .doc-feuille {
+    page: paysage;
+    width: auto;
+    min-height: 0;
+  }
+  .sig-bloc,
+  .signatures,
+  .qr-verif,
+  .encadre {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+}

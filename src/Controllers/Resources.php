@@ -18,7 +18,7 @@ final class Resources
             'duree_jours' => 'dec', 'modalite' => 'enum:presentiel,distanciel,mixte', 'contenu' => 'text:200000',
             'methodes_pedagogiques' => 'text', 'moyens_techniques' => 'text', 'modalites_evaluation' => 'text',
             'accessibilite' => 'text', 'delai_acces' => 'str:255', 'tarif_inter' => 'dec', 'tarif_intra' => 'dec',
-            'indicateurs_resultats' => 'text', 'version' => 'int', 'actif' => 'bool',
+            'indicateurs_resultats' => 'text', 'version' => 'int|def', 'actif' => 'bool',
         ], search: ['titre', 'code', 'domaine'], filters: ['actif', 'domaine'], order: 'actif DESC, titre'))
             ->register($r, '/formations');
 

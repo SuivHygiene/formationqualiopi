@@ -152,6 +152,56 @@ final class SessionFlowTest extends ApiTestCase
         $this->assertCount(7, $ql['criteres']);
     }
 
+    public function testFenetreDeSignature(): void
+    {
+        $a = $this->newOrg('OF Fenetre');
+        $f = $a->ok('POST', '/formations', ['titre' => 'F']);
+        $s = $a->ok('POST', '/sessions', ['formation_id' => $f['id']]);
+        $a->ok('PUT', '/sessions/' . $s['id'] . '/creneaux', ['creneaux' => [
+            ['date' => '2026-03-02', 'heure_debut' => '09:00', 'heure_fin' => '12:30'],
+            ['date' => '2026-03-02', 'heure_debut' => '13:30', 'heure_fin' => '17:00'],
+        ]]);
+        $s = $a->ok('POST', '/sessions/' . $s['id'] . '/inscriptions', ['stagiaire' => ['prenom' => 'A', 'nom' => 'B']]);
+        $cases = [
+            '2026-03-02 08:29:00' => [false, false],
+            '2026-03-02 08:31:00' => [true, false],
+            '2026-03-02 13:15:00' => [true, true],
+            '2026-03-02 13:31:00' => [false, true],
+            '2026-03-02 18:01:00' => [false, false],
+            '2026-03-03 10:00:00' => [false, false],
+        ];
+        foreach ($cases as $now => $expected) {
+            $this->config['now'] = $now;
+            $p = $this->client();
+            $p->token = $s['inscriptions'][0]['acces_token'];
+            $moi = $p->ok('GET', '/portail/moi');
+            $this->assertSame($expected, array_column($moi['creneaux'], 'signable'), $now);
+            if ($now === '2026-03-02 13:31:00') {
+                $this->assertSame(['passee', 'ouverte'], array_column($moi['creneaux'], 'fenetre'));
+            }
+        }
+    }
+
+    /** Un formulaire envoie des chaînes vides pour les champs non remplis. */
+    public function testFormulairesAvecChampsVides(): void
+    {
+        $a = $this->newOrg('OF Vides');
+        $f = $a->ok('POST', '/formations', ['titre' => 'F', 'version' => '', 'modalite' => '', 'duree_heures' => '', 'actif' => true]);
+        $this->assertSame(1, (int) $f['version']);
+        $this->assertSame('presentiel', $f['modalite']);
+        $st = $a->ok('POST', '/stagiaires', ['prenom' => 'A', 'nom' => 'B', 'civilite' => '', 'client_id' => '']);
+        $this->assertSame('', $st['civilite']);
+        $s = $a->ok('POST', '/sessions', ['formation_id' => $f['id'], 'type' => '', 'modalite' => '', 'statut' => '', 'client_id' => '', 'formateur_id' => '', 'prix_ht' => '']);
+        $this->assertSame('planifiee', $s['statut']);
+        $this->assertSame('intra', $s['type']);
+        $fo = $a->ok('POST', '/formateurs', ['prenom' => 'X', 'nom' => 'Y', 'statut' => '', 'date_maj_cv' => '', 'signature' => '']);
+        $this->assertSame('interne', $fo['statut']);
+        $r = $a->ok('POST', '/registre', ['type' => 'veille', 'date' => '2026-01-01', 'titre' => 'T', 'statut' => '', 'echeance' => '']);
+        $this->assertSame('ouvert', $r['statut']);
+        $a->ok('PUT', '/sessions/' . $s['id'], ['type' => '', 'statut' => 'terminee', 'intitule' => '']);
+        $a->ok('PUT', '/organisme', ['nom' => 'OF Vides', 'email' => '', 'couleur' => '', 'logo' => '']);
+    }
+
     public function testFormateurNeVoitQueSesSessions(): void
     {
         $a = $this->newOrg('OF Roles');
