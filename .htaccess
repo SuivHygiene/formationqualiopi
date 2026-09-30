@@ -1,0 +1,3 @@
+# Filet de sécurité : si le domaine pointe par erreur sur la racine du projet
+# (au lieu de public/), rien n'est servi (config.php, src/, migrations/…).
+Require all denied

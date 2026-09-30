@@ -7,3 +7,6 @@
 /public/*.html
 /dist/
 .DS_Store
+/install.key
+/install.lock
+/build/
