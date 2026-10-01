@@ -36,6 +36,9 @@ abstract class ApiTestCase extends TestCase
     {
         $email = strtolower(preg_replace('/\W/', '', $nom)) . bin2hex(random_bytes(3)) . '@test.fr';
         AuthController::createOrganisme(self::$db, $nom, $email, 'MotDePasse123', 'Ada', 'Admin');
+        // Les tests enchaînent les connexions depuis la même IP : on remet à zéro le compteur
+        // anti-force brute (testé à part dans AuthTest::testLimitationDesTentatives).
+        self::$db->exec('DELETE FROM rate_limits');
         $c = $this->client();
         $r = $c->call('POST', '/auth/login', ['email' => $email, 'password' => 'MotDePasse123']);
         $this->assertSame(200, $r->status, json_encode($r->data));

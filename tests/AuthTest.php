@@ -67,4 +67,30 @@ final class AuthTest extends ApiTestCase
         $this->assertCount(4, $q);
         $this->assertContains('satisfaction_chaud', array_column($q, 'type'));
     }
+
+    public function testChangementEmail(): void
+    {
+        $a = $this->newOrg('OF Email');
+        $b = $this->newOrg('OF Email B');
+        $this->assertSame(422, $a->call('POST', '/auth/email', ['email' => 'nouveau@of.test', 'current' => 'faux'])->status);
+        $this->assertSame(409, $a->call('POST', '/auth/email', ['email' => $b->email, 'current' => 'MotDePasse123'])->status);
+        $me = $a->ok('POST', '/auth/email', ['email' => 'Nouveau@OF.test', 'current' => 'MotDePasse123']);
+        $this->assertSame('nouveau@of.test', $me['user']['email']);
+
+        $anon = $this->client();
+        $this->assertSame(401, $anon->call('POST', '/auth/login', ['email' => $a->email, 'password' => 'MotDePasse123'])->status);
+        $this->assertSame(200, $anon->call('POST', '/auth/login', ['email' => 'nouveau@of.test', 'password' => 'MotDePasse123'])->status);
+    }
+
+    public function testAdminChangeEmailUtilisateur(): void
+    {
+        $a = $this->newOrg('OF Email Admin');
+        $other = $this->newOrg('OF Autre');
+        $u = $a->ok('POST', '/users', ['email' => 'gest' . bin2hex(random_bytes(3)) . '@of.test', 'prenom' => 'G', 'nom' => 'E', 'role' => 'gestionnaire', 'password' => 'MotDePasse123']);
+        $this->assertSame(409, $a->call('PUT', '/users/' . $u['id'], ['email' => $other->email])->status);
+        $a->ok('PUT', '/users/' . $u['id'], ['email' => 'corrige' . $u['id'] . '@of.test', 'email_vide_ignore' => 1]);
+        $a->ok('PUT', '/users/' . $u['id'], ['email' => '', 'prenom' => 'G2']);
+        $emails = array_column($a->ok('GET', '/users'), 'email', 'id');
+        $this->assertSame('corrige' . $u['id'] . '@of.test', $emails[$u['id']]);
+    }
 }
