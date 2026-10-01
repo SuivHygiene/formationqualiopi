@@ -33,15 +33,18 @@ config.php         ← configuration locale (NON versionnée, hors racine web)
 
 Sécurité : sessions PHP (cookie HttpOnly, SameSite=Lax) + jeton CSRF ; mots de passe `password_hash` ; limitation des tentatives (connexion, portail, vérification) ; cloisonnement par `organisme_id` sur chaque requête, testé ; portail stagiaire par jeton aléatoire de 256 bits ; les bonnes réponses des QCM ne sont jamais envoyées au stagiaire ; la vérification publique n'affiche que le prénom et l'initiale du nom.
 
-## Installation (hébergement mutualisé type o2switch)
+## Installation (hébergement mutualisé type o2switch), sans SSH
 
-1. **Base de données** : cPanel → Bases MySQL : créer une base + un utilisateur avec tous les droits.
-2. **Fichiers** : déposer le projet (sans `frontend/node_modules`) dans un dossier, par ex. `~/suivformation/`, et faire pointer le domaine / sous-domaine sur `~/suivformation/public`.
-3. **Configuration** : copier `config.example.php` en `config.php` (à la racine du projet, donc **hors** de `public/`) et renseigner la base.
-4. **Tables** : en SSH, `php bin/migrate.php` (à relancer après chaque mise à jour).
-5. **Premier compte** : `php bin/create-organisme.php "Nom de l'organisme" vous@exemple.fr "MotDePasseSolide"`.
-6. **Interface** : sur votre poste, `cd frontend && npm install && npm run build`, puis déposer le contenu généré de `public/` (fichiers `.html` + dossier `assets/`).
-7. **HTTPS obligatoire** (Let's Encrypt dans cPanel) : le cookie de session est marqué `Secure`.
+1. **Paquet** : `bin/package.sh` produit `build/suivformation-….zip` et affiche une **clé d'installation** (à usage unique).
+2. **Base de données** : cPanel → *Bases de données MySQL* : créer une base, un utilisateur, lui donner **tous les privilèges** sur la base.
+3. **Version PHP** : cPanel → *Sélecteur de version PHP* : 8.2 ou plus, extensions `pdo_mysql` et `mbstring` cochées.
+4. **Dépôt des fichiers** : décompresser le zip et envoyer le dossier (FileZilla) dans votre espace, ex. `~/suivformation-test/` — **pas** dans `public_html`.
+5. **Racine du sous-domaine** : cPanel → *Domaines* → le sous-domaine → racine du document = `suivformation-test/public`.
+   (Le `.htaccess` à la racine du projet bloque tout si la racine pointe par erreur au mauvais endroit.)
+6. **HTTPS** : cPanel → *SSL/TLS Status* (AutoSSL) : certificat actif sur le sous-domaine.
+7. **Installation** : ouvrir `https://votre-sous-domaine/install.php`, saisir la clé, les accès à la base et le premier compte. La page crée `config.php` (hors web), les tables et l'administrateur, puis se supprime et se verrouille.
+
+Mises à jour : redéposer `public/`, `src/`, `migrations/` (sans toucher à `config.php`), puis appliquer les nouvelles migrations (`php bin/migrate.php` en SSH ; une page de mise à jour sans SSH viendra avec la première migration).
 
 Pour ouvrir l'inscription libre de nouveaux organismes (vente en libre-service) : `'signup_enabled' => true` dans `config.php`.
 
