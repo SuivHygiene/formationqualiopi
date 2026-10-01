@@ -22,6 +22,7 @@ final class AuthController
         $r->add('POST', '/auth/logout', fn (Request $q) => $this->logout());
         $r->add('GET', '/auth/me', fn (Request $q) => $this->me());
         $r->add('POST', '/auth/password', fn (Request $q) => $this->changePassword($q));
+        $r->add('POST', '/auth/email', fn (Request $q) => $this->changeEmail($q));
         $r->add('POST', '/auth/signup', fn (Request $q) => $this->signup($q));
     }
 
@@ -78,6 +79,29 @@ final class AuthController
         $this->ctx->db->update('users', ['password_hash' => password_hash($in['password'], PASSWORD_DEFAULT)], ['id' => $u['id']]);
         $this->ctx->audit($req, 'password', 'users', (int) $u['id']);
         return ['ok' => true];
+    }
+
+    /** Changement de l'e-mail de connexion (mot de passe actuel exigé). */
+    private function changeEmail(Request $req): array
+    {
+        $u = $this->ctx->auth->require();
+        $in = Validator::clean($req->body, ['current' => 'str:200|req', 'email' => 'email|req']);
+        $hash = (string) $this->ctx->db->value('SELECT password_hash FROM users WHERE id = ?', [$u['id']]);
+        if (!password_verify($in['current'], $hash)) {
+            throw HttpError::bad('Mot de passe actuel incorrect', ['current' => 'Incorrect']);
+        }
+        self::assertEmailFree($this->ctx->db, $in['email'], (int) $u['id']);
+        $this->ctx->db->update('users', ['email' => $in['email']], ['id' => $u['id']]);
+        $this->ctx->audit($req, 'email', 'users', (int) $u['id']);
+        $this->ctx->auth->refresh();
+        return $this->me();
+    }
+
+    public static function assertEmailFree(\App\Core\Db $db, string $email, int $exceptUserId = 0): void
+    {
+        if ($db->value('SELECT id FROM users WHERE email = ? AND id <> ?', [strtolower($email), $exceptUserId]) !== null) {
+            throw new HttpError(409, 'Un compte existe déjà avec cet e-mail', ['email' => 'Déjà utilisé']);
+        }
     }
 
     /** Création d'un organisme + compte admin (désactivée par défaut : config signup_enabled). */

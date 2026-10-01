@@ -89,11 +89,18 @@ final class AdminController
             throw HttpError::notFound('Utilisateur');
         }
         $in = Validator::clean($req->body, [
-            'prenom' => 'str:100|notnull', 'nom' => 'str:100|notnull', 'role' => 'enum:admin,gestionnaire,formateur',
+            'email' => 'email', 'prenom' => 'str:100|notnull', 'nom' => 'str:100|notnull', 'role' => 'enum:admin,gestionnaire,formateur',
             'formateur_id' => 'fk:formateurs', 'actif' => 'bool', 'password' => 'str:200',
         ], true, $this->ctx->db, $org);
         if ($id === (int) $me['id'] && ((isset($in['actif']) && !$in['actif']) || (isset($in['role']) && $in['role'] !== 'admin'))) {
             throw HttpError::bad('Vous ne pouvez pas retirer vos propres droits administrateur');
+        }
+        if (array_key_exists('email', $in)) {
+            if ($in['email'] === null) {
+                unset($in['email']);
+            } else {
+                AuthController::assertEmailFree($this->ctx->db, $in['email'], $id);
+            }
         }
         if (!empty($in['password'])) {
             AuthController::assertStrong($in['password']);

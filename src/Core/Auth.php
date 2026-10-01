@@ -59,6 +59,13 @@ final class Auth
         $this->loaded = false;
     }
 
+    /** Force la relecture de l'utilisateur (après modification de son compte). */
+    public function refresh(): void
+    {
+        $this->loaded = false;
+        $this->user = null;
+    }
+
     public function logout(): void
     {
         $this->session->destroy();

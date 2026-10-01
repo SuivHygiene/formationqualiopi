@@ -33,7 +33,7 @@ const ORG_FIELDS = [
 ];
 
 export async function renderParametres(el, tab, alive = () => true) {
-  const tabs = [['organisme', 'Organisme'], ...(isAdmin() ? [['utilisateurs', 'Utilisateurs']] : []), ['compte', 'Mon mot de passe']];
+  const tabs = [['organisme', 'Organisme'], ...(isAdmin() ? [['utilisateurs', 'Utilisateurs']] : []), ['compte', 'Mon compte']];
   if (!tabs.some(([k]) => k === tab)) tab = tabs[0][0];
   el.innerHTML = html`<div class="page-head"><div><h1>Paramètres</h1></div></div>
     <div class="tabs">${raw(tabs.map(([k, l]) => html`<button class="${k === tab ? 'active' : ''}" data-t="${k}">${l}</button>`).join(''))}</div><div data-body></div>`;
@@ -85,7 +85,7 @@ async function tabUsers(body, alive) {
       { name: 'email', label: 'E-mail', type: 'email', required: true, full: true },
       { name: 'role', label: 'Rôle', type: 'select', options: opts(ROLE), default: 'gestionnaire' },
       { name: 'formateur_id', label: 'Fiche formateur liée', type: 'select', options: fOpts },
-      { name: 'password', label: 'Mot de passe provisoire (10 caractères min.)', type: 'text', required: true, full: true, help: 'Transmettez-le de façon sûre ; la personne le changera dans « Mon mot de passe ».' },
+      { name: 'password', label: 'Mot de passe provisoire (10 caractères min.)', type: 'text', required: true, full: true, help: 'Transmettez-le de façon sûre ; la personne le changera dans « Mon compte ».' },
     ],
     onSubmit: async (v) => { await post('/users', v); toast('Utilisateur créé', 'success'); reload(); },
   }));
@@ -96,6 +96,7 @@ async function tabUsers(body, alive) {
       fields: [
         { name: 'prenom', label: 'Prénom' },
         { name: 'nom', label: 'Nom' },
+        { name: 'email', label: 'E-mail de connexion', type: 'email', full: true },
         { name: 'role', label: 'Rôle', type: 'select', options: opts(ROLE) },
         { name: 'formateur_id', label: 'Fiche formateur liée', type: 'select', options: fOpts },
         { name: 'password', label: 'Nouveau mot de passe (laisser vide pour ne pas changer)', type: 'text', full: true },
@@ -117,9 +118,31 @@ function tabCompte(body) {
     { name: 'current', label: 'Mot de passe actuel', type: 'password', required: true, full: true },
     { name: 'password', label: 'Nouveau mot de passe (10 caractères min.)', type: 'password', required: true, full: true },
   ];
-  body.innerHTML = html`<form class="card form-grid" style="max-width:520px" novalidate><p class="full">Connecté en tant que <strong>${state.user.email}</strong></p>${raw(formFields(fields))}
+  const emailFields = [
+    { name: 'email', label: 'Nouvel e-mail de connexion', type: 'email', required: true, full: true },
+    { name: 'current', label: 'Mot de passe actuel (confirmation)', type: 'password', required: true, full: true },
+  ];
+  body.innerHTML = html`<form class="card form-grid" style="max-width:520px" novalidate data-email><h2 class="full">E-mail de connexion</h2>
+    <p class="full">Actuellement : <strong data-current-email>${state.user.email}</strong></p>${raw(formFields(emailFields))}
+    <div class="form-actions full"><button class="btn btn-primary" type="submit">Changer l'e-mail</button></div></form>
+    <form class="card form-grid" style="max-width:520px" novalidate data-password><h2 class="full">Mot de passe</h2>${raw(formFields(fields).replaceAll('id="f_current"', 'id="f_current_pw"').replaceAll('for="f_current"', 'for="f_current_pw"'))}
     <div class="form-actions full"><button class="btn btn-primary" type="submit">Changer le mot de passe</button></div></form>`;
-  const form = $('form', body);
+  const emailForm = $('[data-email]', body);
+  emailForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    try {
+      const me = await post('/auth/email', readForm(emailForm, emailFields));
+      state.user = me.user;
+      $('[data-current-email]', body).textContent = me.user.email;
+      emailForm.reset();
+      showFieldErrors(emailForm, {});
+      toast('E-mail modifié : utilisez-le à la prochaine connexion', 'success');
+    } catch (err) {
+      showFieldErrors(emailForm, err);
+      toastError(err);
+    }
+  });
+  const form = $('[data-password]', body);
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     try {
